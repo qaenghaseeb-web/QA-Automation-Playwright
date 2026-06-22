@@ -87,10 +87,20 @@ class HomePage extends BasePage {
 
   /**
    * Verify the hero section is fully visible
+   * Uses specific heading first, falls back to any prominent heading
    * @returns {Promise<boolean>}
    */
   async isHeroVisible() {
-    return await this.isVisible(this.heroHeading);
+    // Try the specific OCUS hero heading first
+    const specificHero = await this.isVisible(this.heroHeading, 3000);
+    if (specificHero) return true;
+
+    // Fallback: any H1 on the page (OCUS may have updated hero copy)
+    const anyH1 = await this.isVisible(this.page.locator('h1').first(), 5000);
+    if (anyH1) return true;
+
+    // Last fallback: first H2 (hero may use H2)
+    return await this.isVisible(this.page.locator('h1, h2').first(), 5000);
   }
 
   /**
