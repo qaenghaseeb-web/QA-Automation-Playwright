@@ -1,0 +1,78 @@
+{
+  "validData": [
+    {
+      "scenario": "Standard valid submission",
+      "email": "test.user@example.com",
+      "subject": "Quality Assurance Test - Please Ignore",
+      "description": "This is an automated QA test submission. Please disregard."
+    },
+    {
+      "scenario": "Business email format",
+      "email": "john.doe@enterprise-company.co.uk",
+      "subject": "Enterprise Inquiry Test",
+      "description": "Testing with business domain email address."
+    },
+    {
+      "scenario": "Long valid input",
+      "email": "very.long.email.address.for.testing@subdomain.company.com",
+      "subject": "A reasonably long subject line for testing maximum character limits in forms",
+      "description": "This is a longer description to test how the form handles multiple lines of text input. The purpose is to verify that the text area properly expands and handles paragraph-length content without truncation or layout issues."
+    }
+  ],
+  "invalidData": {
+    "emptyFields": {
+      "scenario": "All fields empty",
+      "email": "",
+      "subject": "",
+      "description": ""
+    },
+    "invalidEmails": [
+      {
+        "scenario": "Missing @ symbol",
+        "email": "invalidemail.com"
+      },
+      {
+        "scenario": "Missing domain",
+        "email": "user@"
+      },
+      {
+        "scenario": "Missing username",
+        "email": "@domain.com"
+      },
+      {
+        "scenario": "Double @ symbol",
+        "email": "user@@domain.com"
+      },
+      {
+        "scenario": "Spaces in email",
+        "email": "user @domain.com"
+      },
+      {
+        "scenario": "Special characters only",
+        "email": "!#$%@domain.com"
+      }
+    ],
+    "specialCharacters": [
+      {
+        "scenario": "XSS injection in subject",
+        "subject": "<script>alert('xss')</script>"
+      },
+      {
+        "scenario": "SQL injection in subject",
+        "subject": "'; DROP TABLE users; --"
+      },
+      {
+        "scenario": "HTML tags in description",
+        "description": "<img src=x onerror=alert('hack')>"
+      },
+      {
+        "scenario": "Unicode characters",
+        "subject": "テスト 测试 Тест"
+      },
+      {
+        "scenario": "Excessive length (1000+ chars)",
+        "subject": "A very long string that repeats itself many times to test the maximum character limit of the subject field and ensure that the form properly handles or rejects extremely long inputs without causing layout breakage or backend errors. This text is intentionally verbose and repetitive to simulate edge case scenarios."
+      }
+    ]
+  }
+}

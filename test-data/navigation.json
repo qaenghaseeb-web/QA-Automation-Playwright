@@ -1,0 +1,83 @@
+{
+  "topNav": [
+    { "name": "For enterprise", "url": "/" },
+    { "name": "For photographers", "url": "/photographers" },
+    { "name": "For restaurants", "url": "/restaurants" }
+  ],
+  "products": [
+    {
+      "name": "Professional Photography",
+      "description": "Global photoshoot operations",
+      "url": "/product/pro-photography"
+    },
+    {
+      "name": "AI Moderate",
+      "description": "Always-on image moderation",
+      "url": "/product/ai-moderate"
+    },
+    {
+      "name": "AI Enhance",
+      "description": "Auto post-production",
+      "url": "/product/ai-enhance"
+    },
+    {
+      "name": "AI Perform",
+      "description": "Measured image performance",
+      "url": "/product/ai-perform"
+    }
+  ],
+  "solutions": [
+    {
+      "name": "Global Photography Coverage",
+      "description": "Scale your photoshoots",
+      "url": "/solution/global-photography-coverage"
+    },
+    {
+      "name": "Brand Protection & Policing",
+      "description": "Enforce your content policies",
+      "url": "/solution/brand-protection"
+    },
+    {
+      "name": "Audit Existing Catalog",
+      "description": "Assess image quality",
+      "url": "/solution/audit-existing-catalog"
+    }
+  ],
+  "industries": [
+    {
+      "name": "Food",
+      "description": "Full restaurant coverage",
+      "url": "/industry/food"
+    },
+    {
+      "name": "Real Estate",
+      "description": "Stunning property images",
+      "url": "/industry/real-estate"
+    },
+    {
+      "name": "Travel",
+      "description": "Compelling travel imagery",
+      "url": "/industry/travel"
+    },
+    {
+      "name": "eCommerce",
+      "description": "Visuals that sell",
+      "url": "/industry/ecommerce"
+    }
+  ],
+  "staticPages": [
+    { "name": "About us", "url": "/about-us" },
+    { "name": "Careers", "url": "/careers" },
+    { "name": "Resources", "url": "/resources" }
+  ],
+  "externalLinks": [
+    {
+      "name": "Help Center",
+      "url": "https://help.ocus.com/hc/en-us"
+    },
+    {
+      "name": "Contact Sales",
+      "url": "https://help.ocus.com/hc/en-us/requests/new"
+    }
+  ]
+}

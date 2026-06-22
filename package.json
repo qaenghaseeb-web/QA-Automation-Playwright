@@ -1,0 +1,42 @@
+{
+  "name": "qa-automation-playwright-ocus",
+  "version": "1.0.0",
+  "description": "Enterprise QA Automation Framework using Playwright for OCUS Website",
+  "author": "Kabir Baloch",
+  "license": "MIT",
+  "scripts": {
+    "test": "npx playwright test",
+    "test:smoke": "npx playwright test tests/smoke/",
+    "test:regression": "npx playwright test tests/regression/",
+    "test:api": "npx playwright test tests/api/",
+    "test:visual": "npx playwright test tests/visual/",
+    "test:a11y": "npx playwright test tests/accessibility/",
+    "test:performance": "npx playwright test tests/performance/",
+    "test:responsive": "npx playwright test tests/responsive/",
+    "test:seo": "npx playwright test tests/seo/",
+    "test:chromium": "npx playwright test --project=chromium",
+    "test:firefox": "npx playwright test --project=firefox",
+    "test:webkit": "npx playwright test --project=webkit",
+    "test:mobile": "npx playwright test --project='iPhone 13' --project='Pixel 7' --project='iPad Pro 11'",
+    "report": "npx playwright show-report",
+    "update:snapshots": "npx playwright test tests/visual/ --update-snapshots",
+    "lint": "eslint tests/ pages/ utils/ fixtures/",
+    "lint:fix": "eslint tests/ pages/ utils/ fixtures/ --fix",
+    "format": "prettier --write 'tests/**/*.js' 'pages/**/*.js' 'utils/**/*.js' 'fixtures/**/*.js'"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "^4.10.0",
+    "@playwright/test": "^1.49.0",
+    "eslint": "^9.15.0",
+    "prettier": "^3.4.0"
+  },
+  "keywords": [
+    "playwright",
+    "qa-automation",
+    "e2e-testing",
+    "visual-regression",
+    "accessibility-testing",
+    "cross-browser-testing",
+    "ocus"
+  ]
+}

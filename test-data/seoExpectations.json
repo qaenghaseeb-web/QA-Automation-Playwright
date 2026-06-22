@@ -1,0 +1,64 @@
+{
+  "pages": {
+    "/": {
+      "titlePattern": "Ocus",
+      "metaDescriptionMinLength": 10,
+      "expectedH1Count": 1,
+      "hasCanonical": true,
+      "hasOGTags": true
+    },
+    "/product/pro-photography": {
+      "titlePattern": "Photography|OCUS|Ocus",
+      "expectedH1Count": 1,
+      "hasCanonical": true,
+      "hasOGTags": true
+    },
+    "/product/ai-moderate": {
+      "titlePattern": "Moderate|OCUS|Ocus",
+      "expectedH1Count": 1,
+      "hasCanonical": true,
+      "hasOGTags": true
+    },
+    "/product/ai-enhance": {
+      "titlePattern": "Enhance|OCUS|Ocus",
+      "expectedH1Count": 1,
+      "hasCanonical": true,
+      "hasOGTags": true
+    },
+    "/product/ai-perform": {
+      "titlePattern": "Perform|OCUS|Ocus",
+      "expectedH1Count": 1,
+      "hasCanonical": true,
+      "hasOGTags": true
+    },
+    "/about-us": {
+      "titlePattern": "About|OCUS|Ocus",
+      "expectedH1Count": 1,
+      "hasCanonical": true,
+      "hasOGTags": true
+    },
+    "/industry/food": {
+      "titlePattern": "Food|OCUS|Ocus",
+      "expectedH1Count": 1,
+      "hasCanonical": true,
+      "hasOGTags": true
+    },
+    "/industry/ecommerce": {
+      "titlePattern": "Commerce|OCUS|Ocus",
+      "expectedH1Count": 1,
+      "hasCanonical": true,
+      "hasOGTags": true
+    }
+  },
+  "globalRules": {
+    "titleMaxLength": 70,
+    "metaDescriptionMaxLength": 160,
+    "metaDescriptionMinLength": 50,
+    "maxH1PerPage": 1,
+    "requireAltOnImages": true,
+    "requireCanonical": true,
+    "requireOGTitle": true,
+    "requireOGDescription": true,
+    "requireOGImage": true
+  }
+}

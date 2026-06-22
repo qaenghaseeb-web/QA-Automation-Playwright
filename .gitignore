@@ -1,0 +1,34 @@
+# Dependencies
+node_modules/
+
+# Playwright outputs
+playwright-report/
+test-results/
+blob-report/
+
+# Framework outputs
+reports/
+screenshots/
+videos/
+traces/
+
+# Visual regression snapshots (optional: remove this line if you want to track baselines)
+# tests/**/*.spec.js-snapshots/
+
+# Environment
+.env
+.env.local
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs
+*.log
+npm-debug.log*

@@ -1,0 +1,298 @@
+name: 🎭 Playwright QA Pipeline
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Triggers: Push to main/develop, Pull Requests, and scheduled daily runs
+# ─────────────────────────────────────────────────────────────────────────────
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+  schedule:
+    - cron: '0 6 * * 1-5'   # Mon–Fri at 6:00 AM UTC (11:00 AM PKT)
+  workflow_dispatch:          # Allow manual trigger from GitHub UI
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Environment Variables — available to all jobs
+# ─────────────────────────────────────────────────────────────────────────────
+env:
+  BASE_URL: https://www.ocus.com
+  CONTACT_URL: https://help.ocus.com/hc/en-us/requests/new
+  NODE_VERSION: 'lts/*'
+
+# ─────────────────────────────────────────────────────────────────────────────
+# GATE 1 — Smoke Tests (runs first, blocks all downstream jobs on failure)
+# Browsers: Chromium only (fastest gate)
+# Estimated time: 3–5 minutes
+# ─────────────────────────────────────────────────────────────────────────────
+jobs:
+  smoke-tests:
+    name: 🔥 Smoke Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: ⬇️ Checkout repository
+        uses: actions/checkout@v4
+
+      - name: 🟢 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: 📦 Install dependencies
+        run: npm ci
+
+      - name: 🌐 Install Playwright browsers (Chromium only)
+        run: npx playwright install --with-deps chromium
+
+      - name: 🔥 Run Smoke Tests
+        run: npx playwright test tests/smoke/ --project=chromium
+        env:
+          CI: true
+          BASE_URL: ${{ env.BASE_URL }}
+
+      - name: 📤 Upload smoke test report
+        uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}
+        with:
+          name: smoke-report-${{ github.run_number }}
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 14
+
+  # ─────────────────────────────────────────────────────────────────────────
+  # GATE 2A — Regression + API Tests
+  # Depends on: smoke-tests
+  # Browsers: Chromium + Firefox
+  # Estimated time: 8–12 minutes
+  # ─────────────────────────────────────────────────────────────────────────
+  regression-tests:
+    name: 🧪 Regression + API Tests
+    needs: smoke-tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    steps:
+      - name: ⬇️ Checkout repository
+        uses: actions/checkout@v4
+
+      - name: 🟢 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: 📦 Install dependencies
+        run: npm ci
+
+      - name: 🌐 Install Playwright browsers
+        run: npx playwright install --with-deps chromium firefox
+
+      - name: 🧪 Run Regression Tests
+        run: npx playwright test tests/regression/ --project=chromium --project=firefox
+        env:
+          CI: true
+          BASE_URL: ${{ env.BASE_URL }}
+          CONTACT_URL: ${{ env.CONTACT_URL }}
+
+      - name: 🔌 Run API Validation Tests
+        run: npx playwright test tests/api/ --project=chromium
+        env:
+          CI: true
+          BASE_URL: ${{ env.BASE_URL }}
+
+      - name: 📤 Upload regression report
+        uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}
+        with:
+          name: regression-report-${{ github.run_number }}
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 14
+
+  # ─────────────────────────────────────────────────────────────────────────
+  # GATE 2B — Quality Tests (runs in parallel with regression)
+  # Depends on: smoke-tests
+  # Includes: Accessibility + Performance + SEO
+  # Browsers: Chromium only (quality checks don't need cross-browser)
+  # Estimated time: 6–10 minutes
+  # ─────────────────────────────────────────────────────────────────────────
+  quality-tests:
+    name: ♿ Accessibility + Performance + SEO
+    needs: smoke-tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: ⬇️ Checkout repository
+        uses: actions/checkout@v4
+
+      - name: 🟢 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: 📦 Install dependencies
+        run: npm ci
+
+      - name: 🌐 Install Playwright browsers (Chromium only)
+        run: npx playwright install --with-deps chromium
+
+      - name: ♿ Run Accessibility Tests (axe-core WCAG)
+        run: npx playwright test tests/accessibility/ --project=chromium
+        env:
+          CI: true
+          BASE_URL: ${{ env.BASE_URL }}
+
+      - name: 📊 Run Performance Tests
+        run: npx playwright test tests/performance/ --project=chromium
+        env:
+          CI: true
+          BASE_URL: ${{ env.BASE_URL }}
+
+      - name: 🔍 Run SEO Validation Tests
+        run: npx playwright test tests/seo/ --project=chromium
+        env:
+          CI: true
+          BASE_URL: ${{ env.BASE_URL }}
+
+      - name: 📤 Upload quality report
+        uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}
+        with:
+          name: quality-report-${{ github.run_number }}
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 14
+
+  # ─────────────────────────────────────────────────────────────────────────
+  # GATE 2C — Visual + Responsive Tests (runs in parallel with regression)
+  # Depends on: smoke-tests
+  # Browsers: All 3 desktop + 3 mobile devices
+  # Estimated time: 8–15 minutes
+  # ─────────────────────────────────────────────────────────────────────────
+  visual-responsive-tests:
+    name: 📸 Visual + Responsive Tests
+    needs: smoke-tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    steps:
+      - name: ⬇️ Checkout repository
+        uses: actions/checkout@v4
+
+      - name: 🟢 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: 📦 Install dependencies
+        run: npm ci
+
+      - name: 🌐 Install all Playwright browsers + devices
+        run: npx playwright install --with-deps
+
+      - name: 📸 Run Visual Regression Tests
+        run: npx playwright test tests/visual/ --project=chromium --project=webkit
+        env:
+          CI: true
+          BASE_URL: ${{ env.BASE_URL }}
+        # Visual baselines are committed to repo — diffs will flag regressions
+
+      - name: 📱 Run Responsive Tests (all devices)
+        run: npx playwright test tests/responsive/
+        env:
+          CI: true
+          BASE_URL: ${{ env.BASE_URL }}
+
+      - name: 📤 Upload visual + responsive report
+        uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}
+        with:
+          name: visual-responsive-report-${{ github.run_number }}
+          path: |
+            playwright-report/
+            test-results/
+            screenshots/
+          retention-days: 30  # Keep visual evidence longer
+
+  # ─────────────────────────────────────────────────────────────────────────
+  # FINAL GATE — Full Cross-Browser Suite
+  # Depends on: ALL previous gates
+  # Runs: Only on push to main (not on PRs or scheduled runs)
+  # Estimated time: 20–30 minutes
+  # ─────────────────────────────────────────────────────────────────────────
+  full-cross-browser:
+    name: 🌐 Full Cross-Browser Suite
+    needs: [regression-tests, quality-tests, visual-responsive-tests]
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    steps:
+      - name: ⬇️ Checkout repository
+        uses: actions/checkout@v4
+
+      - name: 🟢 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: 📦 Install dependencies
+        run: npm ci
+
+      - name: 🌐 Install ALL Playwright browsers and devices
+        run: npx playwright install --with-deps
+
+      - name: 🚀 Run Full Test Suite — All Browsers + Devices
+        run: npx playwright test
+        env:
+          CI: true
+          BASE_URL: ${{ env.BASE_URL }}
+          CONTACT_URL: ${{ env.CONTACT_URL }}
+
+      - name: 📤 Upload full cross-browser report
+        uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}
+        with:
+          name: full-report-${{ github.run_number }}
+          path: |
+            playwright-report/
+            test-results/
+            screenshots/
+            reports/
+          retention-days: 30
+
+  # ─────────────────────────────────────────────────────────────────────────
+  # NOTIFICATION — Pipeline Summary
+  # Always runs (success or failure) to post a summary
+  # ─────────────────────────────────────────────────────────────────────────
+  pipeline-summary:
+    name: 📋 Pipeline Summary
+    needs: [smoke-tests, regression-tests, quality-tests, visual-responsive-tests]
+    runs-on: ubuntu-latest
+    if: always()
+
+    steps:
+      - name: 📋 Post pipeline summary
+        run: |
+          echo "## 🎭 Playwright QA Pipeline Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Job | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|-----|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| 🔥 Smoke Tests | ${{ needs.smoke-tests.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| 🧪 Regression + API | ${{ needs.regression-tests.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| ♿ Quality (A11y + Perf + SEO) | ${{ needs.quality-tests.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| 📸 Visual + Responsive | ${{ needs.visual-responsive-tests.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Triggered by:** \`${{ github.event_name }}\` on \`${{ github.ref_name }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Run:** [\#${{ github.run_number }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})" >> $GITHUB_STEP_SUMMARY
+          echo "**Commit:** \`${{ github.sha }}\`" >> $GITHUB_STEP_SUMMARY
