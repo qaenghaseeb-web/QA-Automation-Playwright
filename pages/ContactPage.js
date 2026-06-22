@@ -1,161 +1,119 @@
-const { BasePage } = require('./BasePage');
+// @ts-check
+const { expect } = require('@playwright/test');
+const BasePage = require('./BasePage');
 
-/**
- * ContactPage — Page Object for OCUS Contact Form
- *
- * The "Contact Sales" link on ocus.com redirects to:
- * https://help.ocus.com/hc/en-us/requests/new (Zendesk)
- *
- * IMPORTANT: We test validation behavior ONLY.
- * We NEVER submit forms to production to avoid:
- * - CAPTCHA triggers
- * - Rate limiting
- * - Spam detection
- * - Creating real support tickets
- */
 class ContactPage extends BasePage {
-  /**
-   * @param {import('@playwright/test').Page} page
-   */
   constructor(page) {
     super(page);
 
-    this.contactURL = process.env.CONTACT_URL || 'https://help.ocus.com/hc/en-us/requests/new';
+    // Resilient email locator — tries multiple strategies
+    // Zendesk form uses input[name="request[anonymous_requester_email]"]
+    // or type="email", or aria-label, or placeholder
+    this.emailField = page.locator([
+      'input[name="request[anonymous_requester_email]"]',
+      'input[type="email"]',
+      'input[aria-label*="email" i]',
+      'input[placeholder*="email" i]',
+      'input[id*="email" i]',
+      'label:has-text("Email") + input',
+      'label:has-text("email") ~ input',
+    ].join(', ')).first();
 
-    /* ─── Locators ─── */
+    this.subjectField = page.locator([
+      'input[name="request[subject]"]',
+      'input[id*="subject" i]',
+      'input[placeholder*="subject" i]',
+      'label:has-text("Subject") + input',
+    ].join(', ')).first();
 
-    // Form fields — Zendesk form structure
-    this.emailField = page.getByLabel(/email/i).first();
-    this.subjectField = page.getByLabel(/subject/i).first();
-    this.descriptionField = page.getByLabel(/description|message|how can we help/i).first();
+    this.descriptionField = page.locator([
+      'textarea[name="request[description]"]',
+      'textarea[id*="description" i]',
+      'textarea[aria-label*="description" i]',
+      'textarea[placeholder*="description" i]',
+    ].join(', ')).first();
 
-    // Dropdowns (Zendesk custom fields)
-    this.categoryDropdown = page.locator('select').first();
+    this.submitButton = page.locator([
+      'input[type="submit"]',
+      'button[type="submit"]',
+      'button:has-text("Submit")',
+      'button:has-text("Send")',
+    ].join(', ')).first();
 
-    // Submit button
-    this.submitButton = page.getByRole('button', { name: /submit/i });
-
-    // Validation messages
-    this.validationErrors = page.locator('.notification-error, [role="alert"], .error');
-    this.requiredFieldError = page.getByText(/required|can't be blank|please fill/i);
-
-    // Page elements
-    this.formContainer = page.locator('form').first();
-    this.pageHeading = page.getByRole('heading').first();
+    this.successMessage = page.locator([
+      '[class*="success"]',
+      '[class*="confirmation"]',
+      'text=Thank you',
+      'text=Your request',
+    ].join(', ')).first();
   }
 
-  /* ─── Actions ─── */
-
-  /**
-   * Navigate to the contact form page
-   */
-  async open() {
-    await this.page.goto(this.contactURL, { waitUntil: 'domcontentloaded' });
-    await this.acceptCookies();
+  async navigate() {
+    const url = process.env.CONTACT_URL || 'https://help.ocus.com/hc/en-us/requests/new';
+    await this.page.goto(url, { waitUntil: 'domcontentloaded' });
+    await this.page.waitForTimeout(2000); // Zendesk JS loads slowly
   }
 
   /**
-   * Check if the form page loaded successfully
-   * @returns {Promise<boolean>}
-   */
-  async isFormLoaded() {
-    return await this.isVisible(this.formContainer);
-  }
-
-  /**
-   * Fill in the email field
-   * @param {string} email
+   * Safe fill — only fills if field exists, skips otherwise
    */
   async fillEmail(email) {
-    if (await this.isVisible(this.emailField)) {
-      await this.emailField.fill(email);
+    const field = await this.emailField.elementHandle().catch(() => null);
+    if (!field) {
+      console.warn('[ContactPage] Email field not found — skipping fill');
+      return false;
     }
+    await this.emailField.fill(email);
+    return true;
   }
 
-  /**
-   * Fill in the subject field
-   * @param {string} subject
-   */
   async fillSubject(subject) {
-    if (await this.isVisible(this.subjectField)) {
-      await this.subjectField.fill(subject);
+    const field = await this.subjectField.elementHandle().catch(() => null);
+    if (!field) {
+      console.warn('[ContactPage] Subject field not found — skipping fill');
+      return false;
     }
+    await this.subjectField.fill(subject);
+    return true;
   }
 
-  /**
-   * Fill in the description field
-   * @param {string} description
-   */
   async fillDescription(description) {
-    if (await this.isVisible(this.descriptionField)) {
-      await this.descriptionField.fill(description);
+    const field = await this.descriptionField.elementHandle().catch(() => null);
+    if (!field) {
+      console.warn('[ContactPage] Description field not found — skipping fill');
+      return false;
     }
+    await this.descriptionField.fill(description);
+    return true;
   }
 
   /**
-   * Fill the complete form with test data
-   * @param {object} data - { email, subject, description }
+   * Safe blur — uses Tab key instead of .blur() to avoid locator timeout
    */
-  async fillForm(data) {
-    if (data.email) await this.fillEmail(data.email);
-    if (data.subject) await this.fillSubject(data.subject);
-    if (data.description) await this.fillDescription(data.description);
-  }
-
-  /**
-   * Click submit WITHOUT actually submitting (for validation testing)
-   * The click will trigger client-side validation
-   */
-  async clickSubmit() {
-    if (await this.isVisible(this.submitButton)) {
-      await this.submitButton.click();
-    }
-  }
-
-  /**
-   * Check if validation errors are displayed
-   * @returns {Promise<boolean>}
-   */
-  async hasValidationErrors() {
-    return await this.isVisible(this.validationErrors, 3000) ||
-           await this.isVisible(this.requiredFieldError, 3000);
-  }
-
-  /**
-   * Get count of visible validation error messages
-   * @returns {Promise<number>}
-   */
-  async getValidationErrorCount() {
+  async blurEmail() {
     try {
-      return await this.validationErrors.count();
+      await this.emailField.press('Tab');
     } catch {
-      return 0;
+      // If field not found, press Tab on page body
+      await this.page.keyboard.press('Tab');
     }
   }
 
-  /**
-   * Check HTML5 validation state of the email field
-   * @returns {Promise<boolean>} - true if email is invalid
-   */
   async isEmailInvalid() {
     try {
-      return await this.emailField.evaluate((el) => !el.checkValidity());
+      const field = await this.emailField.elementHandle().catch(() => null);
+      if (!field) return false;
+      return await this.emailField.evaluate(el => !el.validity.valid);
     } catch {
       return false;
     }
   }
 
-  /**
-   * Verify all expected form fields are present
-   * @returns {Promise<object>}
-   */
-  async verifyFormStructure() {
-    return {
-      formVisible: await this.isFormLoaded(),
-      emailField: await this.isVisible(this.emailField),
-      submitButton: await this.isVisible(this.submitButton),
-    };
+  async isFormVisible() {
+    // Check if any form field is present
+    const anyField = this.page.locator('input, textarea').first();
+    return await anyField.isVisible({ timeout: 5000 }).catch(() => false);
   }
 }
 
-module.exports = { ContactPage };
+module.exports = ContactPage;
