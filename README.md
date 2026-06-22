@@ -304,7 +304,7 @@ All test data is in `test-data/` as JSON files — no hardcoded values in test f
 
 ## 👨‍💻 Author
 
-**Kabir Baloch**  
+**Muhammad Haseeb**  
 QA Automation Engineer | Playwright Specialist
 
 ---
