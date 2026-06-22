@@ -1,6 +1,4 @@
-// @ts-check
-
-// BasePage uses named export: module.exports = { BasePage }
+﻿// @ts-check
 const { BasePage } = require('./BasePage');
 
 class ContactPage extends BasePage {
@@ -24,7 +22,6 @@ class ContactPage extends BasePage {
     this.descriptionField = page.locator([
       'textarea[name="request[description]"]',
       'textarea[id*="description" i]',
-      'textarea[aria-label*="description" i]',
       'textarea[placeholder*="description" i]',
     ].join(', ')).first();
 
